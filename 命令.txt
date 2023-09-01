@@ -8,7 +8,7 @@ a.whisper通用标注：音频在2-10s。根据显存选择配置，large需要1
 %PYTHON% short_audio_transcribe.py --languages "C" --whisper_size small
 
 b.下载的已标注的原神数据集：
-%PYTHON% resample_genshin.py
+%PYTHON% transcribe_genshin.py
 
 2.文本处理：
 %PYTHON% preprocess_text.py
