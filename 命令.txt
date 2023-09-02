@@ -1,6 +1,9 @@
 0.环境维护和升级（示例）：
 %PYTHON% -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
 
+安装ffmpeg：
+%PYTHON% setup_ffmpeg.py
+
 1.数据集重采样和标注：
 a.whisper通用标注：音频在2-10s。根据显存选择配置，large需要12G显存。
 %PYTHON% short_audio_transcribe.py --languages "C" --whisper_size large
