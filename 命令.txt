@@ -16,15 +16,15 @@ b.下载的已标注的原神数据集：
 2.文本处理：
 %PYTHON% preprocess_text.py
 
-3.spec_gen
-%PYTHON% spec_gen.py
+3.bert_gen
+%PYTHON% bert_gen.py
 
 4.训练：
 首次训练：
-%PYTHON% train_first.py -c ./configs\config.json
+%PYTHON% train_ms.py -c ./configs\config.json
 
 继续训练：
-%PYTHON% train_cont.py -c ./configs\config.json
+%PYTHON% train_ms.py -c ./configs\config.json --cont
 
 5.推理 --config_dir可选 --model_dir 为配置文件和模型指定目录：
-%PYTHON% inference_webui.py --model_dir ./logs\OUTPUT_MODEL\G_3800.pth
+%PYTHON% inference_webui.py --model_dir ./logs\OUTPUT_MODEL\G_100.pth

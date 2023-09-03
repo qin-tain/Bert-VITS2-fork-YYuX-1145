@@ -8,7 +8,7 @@ import torchaudio
 import commons
 from mel_processing import spectrogram_torch, mel_spectrogram_torch, spec_to_mel_torch
 from utils import load_wav_to_torch, load_filepaths_and_text
-from text import cleaned_text_to_sequence
+from text import cleaned_text_to_sequence, get_bert
 
 """Multi speaker version"""
 
@@ -81,6 +81,7 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
         return (phones, spec, wav, sid, tone, language, bert)
 
     def get_audio(self, filename):
+        audio_norm, sampling_rate = torchaudio.load(filename, frame_offset=0, num_frames=-1, normalize=True, channels_first=True)
         '''
         audio, sampling_rate = load_wav_to_torch(filename)
         if sampling_rate != self.sampling_rate:
@@ -88,6 +89,7 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
                 sampling_rate, self.sampling_rate))
         audio_norm = audio / self.max_wav_value
         audio_norm = audio_norm.unsqueeze(0)
+        '''
         spec_filename = filename.replace(".wav", ".spec.pt")
         if self.use_mel_spec_posterior:
             spec_filename = spec_filename.replace(".spec.pt", ".mel.pt")
@@ -110,21 +112,6 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
                     center=False)
             spec = torch.squeeze(spec, 0)
             torch.save(spec, spec_filename)
-            '''
-        audio_norm, sampling_rate = torchaudio.load(filename, frame_offset=0, num_frames=-1, normalize=True, channels_first=True)
-        # spec_filename = filename.replace(".wav", ".spec.pt")
-        # if os.path.exists(spec_filename):
-        #     spec = torch.load(spec_filename)
-        # else:
-        #     try:
-        spec = spectrogram_torch(audio_norm, self.filter_length,
-                                 self.sampling_rate, self.hop_length, self.win_length,
-                                 center=False)
-        spec = spec.squeeze(0)
-            # except NotImplementedError:
-            #     print("?")
-            # spec = torch.squeeze(spec, 0)
-            # torch.save(spec, spec_filename)
         return spec, audio_norm
 
     def get_text(self, text, word2ph, phone, tone, language_str, wav_path):
@@ -151,10 +138,10 @@ class TextAudioSpeakerLoader(torch.utils.data.Dataset):
             bert = torch.load(bert_path)
             assert bert.shape[-1] == len(phone)
         except:
-            #bert = get_bert(text, word2ph, language_str)
-            #torch.save(bert, bert_path)
-            print(bert.shape[-1], bert_path, text, pold)
-            #assert bert.shape[-1] == len(phone)
+            bert = get_bert(text, word2ph, language_str)
+            torch.save(bert, bert_path)
+            #print(bert.shape[-1], bert_path, text, pold)
+            assert bert.shape[-1] == len(phone)
 
         assert bert.shape[-1] == len(phone), (
         bert.shape, len(phone), sum(word2ph), p1, p2, t1, t2, pold, pold2, word2ph, text, w2pho)
@@ -301,6 +288,8 @@ class DistributedBucketSampler(torch.utils.data.distributed.DistributedSampler):
         for i in range(len(self.buckets)):
             bucket = self.buckets[i]
             len_bucket = len(bucket)
+            if (len_bucket == 0):
+                continue
             ids_bucket = indices[i]
             num_samples_bucket = self.num_samples_per_bucket[i]
 
