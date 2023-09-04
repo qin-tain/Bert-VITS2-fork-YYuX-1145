@@ -27,5 +27,8 @@ b.下载的已标注的原神数据集：
 继续训练：
 %PYTHON% train_ms.py -c ./configs\config.json --cont
 
+启动TensorBoard：
+%PYTHON% -m tensorboard.main --logdir=logs\OUTPUT_MODEL
+
 5.推理 --config_dir可选 --model_dir 为配置文件和模型指定目录：
 %PYTHON% inference_webui.py --model_dir ./logs\OUTPUT_MODEL\G_100.pth
