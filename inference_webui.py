@@ -122,11 +122,11 @@ if __name__ == "__main__":
                     char_dropdown = gr.Dropdown(choices=speakers, value=speakers[0], label='character')
                     language_dropdown = gr.Dropdown(choices=lang, value=lang[0], label='language')
                     sdp_ratio = gr.Slider(minimum=0.1, maximum=0.9, value=0.2, step=0.1,
-                                                label='SDP/DP混合比')
+                                                label='SDP/DP混合比-语调方差')
                     noise_scale = gr.Slider(minimum=0.1, maximum=1.5, value=0.5, step=0.1,
-                                                label='noise/感情变化程度')
+                                                label='noise/感情变化')
                     noise_scale_w = gr.Slider(minimum=0.1, maximum=1.4, value=0.9, step=0.1,
-                                                label='noisew/音素长度')
+                                                label='noisew/音节发音长度变化')
                     length_scale = gr.Slider(minimum=0.1, maximum=2, value=1.0, step=0.1,
                                                 label='length/语速')
                 with gr.Column():
