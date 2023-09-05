@@ -81,10 +81,11 @@ def infer(text, sdp_ratio, noise_scale, noise_scale_w,length_scale,sid):
         lang_ids=lang_ids.to(dev).unsqueeze(0)
         bert = bert.to(dev).unsqueeze(0)
         x_tst_lengths = torch.LongTensor([phones.size(0)]).to(dev)
+        del phones
         speakers = torch.LongTensor([hps.data.spk2id[sid]]).to(dev)
         audio = net_g.infer(x_tst, x_tst_lengths, speakers, tones, lang_ids,bert, sdp_ratio=sdp_ratio
                            , noise_scale=noise_scale, noise_scale_w=noise_scale_w, length_scale=length_scale)[0][0,0].data.cpu().float().numpy()
-        #del stn_tst,tones,lang_ids,bert, x_tst, x_tst_lengths, sid
+        del x_tst, tones, lang_ids, bert, x_tst_lengths, speakers
         return "Success",(hps.data.sampling_rate, audio)
 
 if __name__ == "__main__":
