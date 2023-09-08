@@ -113,7 +113,7 @@ if __name__ == "__main__":
         with gr.Row():
             with gr.Column():
                 text = gr.TextArea(label="Text", placeholder="Input Text Here",
-                                      value="吃葡萄不吐葡萄皮，不吃葡萄倒吐葡萄皮。")
+                                      value="生活就像海洋，只有意志坚强的人，才能到达彼岸。")
                 speaker = gr.Dropdown(choices=speakers, value=speakers[0], label='Speaker')
                 sdp_ratio = gr.Slider(minimum=0, maximum=1, value=0.2, step=0.1, label='SDP Ratio')
                 noise_scale = gr.Slider(minimum=0.1, maximum=1.5, value=0.6, step=0.1, label='Noise Scale')
