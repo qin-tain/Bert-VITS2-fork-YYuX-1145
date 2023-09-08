@@ -118,7 +118,7 @@ if __name__ == "__main__":
                 with gr.Column():
                     textbox = gr.TextArea(label="Text",
                                           placeholder="Type your sentence here",
-                                          value="你知道吗，我最喜欢的季节是冬天。冬天的雪花纷飞，给人一种宁静而美丽的感觉。我喜欢在雪地里漫步，感受雪花轻轻落在脸上的触感。冬天的夜晚，星星点点的繁星在寒冷的天空中闪烁，让人感到无比宁静和神秘。", elem_id=f"tts-input")
+                                          value="生活就像海洋，只有意志坚强的人，才能到达彼岸。", elem_id=f"tts-input")
                     # select character
                     char_dropdown = gr.Dropdown(choices=speakers, value=speakers[0], label='character')
                     language_dropdown = gr.Dropdown(choices=lang, value=lang[0], label='language')
