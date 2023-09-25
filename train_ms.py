@@ -5,6 +5,9 @@ import itertools
 import math
 import torch
 import shutil
+import click
+from typing import Optional
+
 from torch import nn, optim
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
@@ -43,8 +46,16 @@ torch.backends.cudnn.allow_tf32 = True
 torch.set_float32_matmul_precision('medium')
 global_step = 0
 
+global_drive_back_dir = None
 
-def main():
+@click.command()
+@click.option("--drive-back-dir", default=None)
+def main(
+    drive_back_dir: Optional[str],
+):
+    global global_drive_back_dir
+    global_drive_back_dir = drive_back_dir
+
     """Assume Single Node Multi GPUs Training Only"""
     assert torch.cuda.is_available(), "CPU training is not allowed."
 
@@ -336,6 +347,20 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
                 keep_ckpts = getattr(hps.train, 'keep_ckpts', 5)
                 if keep_ckpts > 0:
                     utils.clean_checkpoints(path_to_models=hps.model_dir, n_ckpts_to_keep=keep_ckpts, sort_by_time=True)
+                # 备份logs文件夹到指定文件夹
+                back_dir_path = global_drive_back_dir
+                if back_dir_path is not None and os.path.exists(back_dir_path):
+                    back_log_dir = os.path.join(back_dir_path, "logs")
+                    shutil.copytree("./logs/", back_log_dir, dirs_exist_ok=True)
+                    # 删除过期.pth文件 非 global_step 文件名的都删除
+                    import pathlib
+                    for file in pathlib.Path(back_log_dir).rglob("*.pth"):
+                        num = int(file.stem.split("_")[-1])
+                        if num != global_step:
+                            # overwrite and make the file blank to avoid big file in trash
+                            open(file, 'w', encoding="utf-8").close()
+                            file.rename(file.with_suffix(file.suffix+".__TRASH__"))
+                            os.remove(file)
 
 
         global_step += 1
