@@ -353,7 +353,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
                             print("remove outdated .pth file in backup directory:")
                             print(str(file))
                             open(file, 'w', encoding="utf-8").close()
-                            file_path_trash = file.name + ".__TRASH__"
+                            file_path_trash = file.with_name(file.name + ".__TRASH__")
                             os.rename(file, file_path_trash)
                             os.remove(file_path_trash)
 
