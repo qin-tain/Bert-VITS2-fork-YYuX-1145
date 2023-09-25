@@ -5,6 +5,7 @@ import itertools
 import math
 import torch
 import shutil
+import pathlib
 from torch import nn, optim
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
@@ -103,10 +104,10 @@ def run(rank, n_gpus, hps):
         print("Using duration discriminator for VITS2")
         use_duration_discriminator = True
         net_dur_disc = DurationDiscriminator(
-         hps.model.hidden_channels, 
-         hps.model.hidden_channels, 
-         3, 
-         0.1, 
+         hps.model.hidden_channels,
+         hps.model.hidden_channels,
+         3,
+         0.1,
          gin_channels=hps.model.gin_channels if hps.data.n_speakers != 0 else 0,
          ).cuda(rank)
     if "use_spk_conditioned_encoder" in hps.model.keys() and hps.model.use_spk_conditioned_encoder == True:
@@ -165,7 +166,7 @@ def run(rank, n_gpus, hps):
                                                    optim_g, skip_optimizer=not hps.cont)
             _, optim_d, _, epoch_str = utils.load_checkpoint(utils.latest_checkpoint_path(hps.model_dir, "D_*.pth"), net_d,
                                                    optim_d, skip_optimizer=not hps.cont)
-            
+
             epoch_str = max(epoch_str, 1)
             global_step = (epoch_str - 1) * len(train_loader)
         except Exception as e:
@@ -312,7 +313,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
                 scalar_dict.update({"loss/g/{}".format(i): v for i, v in enumerate(losses_gen)})
                 scalar_dict.update({"loss/d_r/{}".format(i): v for i, v in enumerate(losses_disc_r)})
                 scalar_dict.update({"loss/d_g/{}".format(i): v for i, v in enumerate(losses_disc_g)})
-          
+
                 image_dict = {
                     "slice/mel_org": utils.plot_spectrogram_to_numpy(y_mel[0].data.cpu().numpy()),
                     "slice/mel_gen": utils.plot_spectrogram_to_numpy(y_hat_mel[0].data.cpu().numpy()),
@@ -332,27 +333,45 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
                 utils.save_checkpoint(net_d, optim_d, hps.train.learning_rate, epoch,
                                       os.path.join(hps.model_dir, "D_{}.pth".format(global_step)))
                 if net_dur_disc is not None:
-                    utils.save_checkpoint(net_dur_disc, optim_dur_disc, hps.train.learning_rate, epoch, os.path.join(hps.model_dir, "DUR_{}.pth".format(global_step)))    
+                    utils.save_checkpoint(net_dur_disc, optim_dur_disc, hps.train.learning_rate, epoch, os.path.join(hps.model_dir, "DUR_{}.pth".format(global_step)))
                 keep_ckpts = getattr(hps.train, 'keep_ckpts', 5)
                 if keep_ckpts > 0:
                     utils.clean_checkpoints(path_to_models=hps.model_dir, n_ckpts_to_keep=keep_ckpts, sort_by_time=True)
-                # 备份logs文件夹到指定文件夹
+
+                # backup logs directory to target position
                 back_dir_path = None
                 if "Bert_VITS2_Backdir" in os.environ:
                     back_dir_path = os.environ["Bert_VITS2_Backdir"]
                 if back_dir_path is not None and os.path.exists(back_dir_path):
-                    import pathlib
                     back_log_dir = pathlib.Path(back_dir_path, "logs")
                     logs_path = pathlib.Path("./logs/")
-                    print("saving logs to backup directory: ", back_log_dir)
-                    shutil.copytree(logs_path, back_log_dir, dirs_exist_ok=True)
-                    # 删除过期.pth文件
+                    # backup logs
+                    print("** saving logs to backup directory: ", back_log_dir)
+
+                    def cp_no_pth(src, dst):
+                        if pathlib.Path(src).suffix != ".pth":
+                            return shutil.copy2(src, dst)
+                        return ""
+
+                    shutil.copytree(logs_path, back_log_dir, copy_function=cp_no_pth,
+                                    dirs_exist_ok=True)
+                    # backup newest checkpoint
+                    back_model_dir = back_log_dir.joinpath("OUTPUT_MODEL")
+                    utils.save_checkpoint(net_g, optim_g, hps.train.learning_rate, epoch,
+                                          os.path.join(back_model_dir, f"G_{global_step}.pth"))
+                    utils.save_checkpoint(net_d, optim_d, hps.train.learning_rate, epoch,
+                                          os.path.join(back_model_dir, f"D_{global_step}.pth"))
+                    if net_dur_disc is not None:
+                        dur_back_path = os.path.join(back_model_dir, f"DUR_{global_step}.pth")
+                        utils.save_checkpoint(net_dur_disc, optim_dur_disc, hps.train.learning_rate,
+                                              epoch, dur_back_path)
+                    # remove outdated .pth file
+                    print("** remove outdated .pth file in backup directory:")
                     for file in back_log_dir.rglob("*.pth"):
                         rel_path = file.relative_to(back_log_dir)
                         if not logs_path.joinpath(rel_path).exists():
                             # overwrite and make the file blank to avoid big file in trash
-                            print("remove outdated .pth file in backup directory:")
-                            print(str(file))
+                            print("** removing:", str(file))
                             open(file, 'w', encoding="utf-8").close()
                             file_path_trash = file.with_name(file.name + ".__TRASH__")
                             os.rename(file, file_path_trash)
