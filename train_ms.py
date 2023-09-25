@@ -342,6 +342,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
                     back_dir_path = os.environ["Bert_VITS2_Backdir"]
                 if back_dir_path is not None and os.path.exists(back_dir_path):
                     back_log_dir = os.path.join(back_dir_path, "logs")
+                    print("saving logs to backup directory: ", back_log_dir)
                     shutil.copytree("./logs/", back_log_dir, dirs_exist_ok=True)
                     # 删除过期.pth文件 非 global_step 文件名的都删除
                     import pathlib
@@ -349,9 +350,12 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
                         num = int(file.stem.split("_")[-1])
                         if num != global_step:
                             # overwrite and make the file blank to avoid big file in trash
+                            print("remove outdated .pth file in backup directory:")
+                            print(str(file))
                             open(file, 'w', encoding="utf-8").close()
-                            file.rename(file.with_suffix(file.suffix+".__TRASH__"))
-                            os.remove(file)
+                            file_path_trash = file.name + ".__TRASH__"
+                            os.rename(file, file_path_trash)
+                            os.remove(file_path_trash)
 
 
         global_step += 1
