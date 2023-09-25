@@ -348,7 +348,8 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, schedulers, scaler, loade
                     shutil.copytree(logs_path, back_log_dir, dirs_exist_ok=True)
                     # 删除过期.pth文件
                     for file in back_log_dir.rglob("*.pth"):
-                        if not logs_path.joinpath(file.name).exists():
+                        rel_path = file.relative_to(back_log_dir)
+                        if not logs_path.joinpath(rel_path).exists():
                             # overwrite and make the file blank to avoid big file in trash
                             print("remove outdated .pth file in backup directory:")
                             print(str(file))
