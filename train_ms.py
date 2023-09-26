@@ -56,7 +56,7 @@ def main():
     hps = utils.get_hparams()
     if not hps.cont:
         model_dir = pathlib.Path("./logs/OUTPUT_MODEL")
-        for file in model_dir.glob("*.pth"):
+        for file in model_dir.glob("G_*.pth"):
             if file.name != "G_0.pth":
                 raise RuntimeError(f"Find .pth file {file!r}, if you want to a new train, "
                                    "move or rename it first.")
