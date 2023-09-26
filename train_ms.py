@@ -55,9 +55,14 @@ def main():
 
     hps = utils.get_hparams()
     if not hps.cont:
-           shutil.copy('./pretrained_models/D_0.pth','./logs/OUTPUT_MODEL/D_0.pth')
-           shutil.copy('./pretrained_models/G_0.pth','./logs/OUTPUT_MODEL/G_0.pth')
-           shutil.copy('./pretrained_models/DUR_0.pth','./logs/OUTPUT_MODEL/DUR_0.pth')
+        model_dir = pathlib.Path("./logs/OUTPUT_MODEL")
+        for file in model_dir.glob("*.pth"):
+            if file.name != "G_0.pth":
+                raise RuntimeError(f"Find .pth file {file!r}, if you want to a new train, "
+                                   "move or rename it first.")
+        shutil.copy('./pretrained_models/D_0.pth','./logs/OUTPUT_MODEL/D_0.pth')
+        shutil.copy('./pretrained_models/G_0.pth','./logs/OUTPUT_MODEL/G_0.pth')
+        shutil.copy('./pretrained_models/DUR_0.pth','./logs/OUTPUT_MODEL/DUR_0.pth')
     mp.spawn(run, nprocs=n_gpus, args=(n_gpus, hps,))
 
 
